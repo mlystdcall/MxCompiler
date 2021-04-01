@@ -14,8 +14,8 @@ import java.io.InputStream;
 
 public class Semantic {
 	public static void main( String[] args ) throws Exception {
-		String name = args[0];
-		InputStream input = new FileInputStream(name);
+		// String name = args[0];
+		InputStream input = System.in;
 		try {
 			RootNode ASTRoot;
 			MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
