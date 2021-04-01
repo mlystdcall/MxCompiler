@@ -1,0 +1,30 @@
+ASTNode*
+		RootNode
+		PartNode*
+				GlobalVarNode
+				FuncDefNode
+				ClassDefNode
+		TypeNode
+		ExpNode*
+				SufExpNode
+				FunCallExpNode
+				IdxExpNode
+				DotExpNode
+				UnaryExpNode
+				NewExpNode
+				BinExpNode
+				SimpleExpNode
+		ParamListNode
+		BlockNode
+		StNode*
+				BlockStNode
+				VarDefStNode
+				IfStNode
+				LoopStNode
+				CtrlStNode
+				ExpStNode
+				EmptyStNode
+		ClassContentNode*
+				ClassVarNode
+				ClassFuncNode
+

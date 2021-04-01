@@ -1,0 +1,249 @@
+package main;
+
+import ast.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import utility.semanticError;
+
+public class SemanticChecker implements ASTVisitor {
+	
+	public HashMap<String, ClassDef> classes;
+	public HashMap<String, FuncDef> funcs;
+	public ArrayList<HashMap<String, VarDef>> vars;
+	public int loop_dep;
+	public FuncDef outside_func;
+	
+	public SemanticChecker() {
+		classes = new HashMap<>();
+		funcs = new HashMap<>();
+		vars = new ArrayList<>();
+		loop_dep = 0;
+	}
+	
+	@Override public void visit( RootNode nod ) {
+		vars.add( new HashMap<>() );
+		for( PartNode it : nod.parts ) {
+			it.accept(this);
+		}
+		vars.remove( vars.size() - 1 );
+		if( funcs.containsKey("main") == false ) {
+			throw new semanticError("no main found", nod.pos);
+		}
+	}
+	
+	@Override public void visit( GlobalVarNode nod ) {
+		if( ok_var_type(nod.type.name) == false ) {
+			throw new semanticError("error type: " + nod.type.name, nod.pos);
+		}
+		if( nod.exp != null ) {
+			nod.exp.accept(this);
+			if( ok_type_match( nod.exp.realType, nod.exp.realDim,
+							   nod.type.name, nod.type.dim ) == false ) {
+				throw new semanticError("type not match: (" +
+										nod.exp.realType +
+										") and (" +
+										nod.type.name +
+										")", nod.pos);
+			}
+		}
+		HashMap<String, VarDef> now_vars = vars.get( vars.size() - 1 );
+		for( String name : nod.names ) {
+			if( now_vars.containsKey(name) || classes.containsKey(name) ) {
+				throw new semanticError("var name invalid: " + name, nod.pos);
+			}
+			VarDef now = new VarDef();
+			now.type = nod.type.name;
+			now.dim = nod.type.dim;
+			now.name = name;
+			now_vars.put(name, now);
+		}
+	}
+	
+	@Override public void visit( TypeNode nod ) {
+		throw new semanticError("visit(TypeNode) impossible", nod.pos);
+	}
+	
+	@Override public void visit( FuncDefNode nod ) {
+		if( ok_func_type(nod.returnType.name, nod.returnType.dim) == false ) {
+			throw new semanticError("error type: " + nod.returnType.name, nod.pos);
+		}
+		if( funcs.containsKey(nod.name) || classes.containsKey(nod.name) ) {
+			throw new semanticError("func name invalid: " + nod.name, nod.pos);
+		}
+		FuncDef now = new FuncDef();
+		now.type = nod.returnType.name;
+		now.dim = nod.returnType.dim;
+		now.name = nod.name;
+		vars.add( new HashMap<>() );
+		HashMap<String, VarDef> now_vars = vars.get( vars.size() - 1 );
+		int args_cnt = (int)nod.paramList.types.size();
+		for( int i = 0; i < args_cnt; ++i ) {
+			VarDef this_var = new VarDef();
+			this_var.type = nod.paramList.types.get(i).name;
+			this_var.dim = nod.paramList.types.get(i).dim;
+			this_var.name = nod.paramList.names.get(i);
+			if( ok_var_type(this_var.type) == false ) {
+				throw new semanticError("error type: " + this_var.type, nod.pos);
+			}
+			if( now_vars.containsKey(this_var.name) ||
+				classes.containsKey(this_var.name) ) {
+				throw new semanticError("var name invalid: " + this_var.name, nod.pos);
+			}
+			now_vars.put(this_var.name, this_var);
+			now.args.add(this_var);
+		}
+		funcs.put(nod.name, now);
+		outside_func = now;
+		nod.block.accept(this);
+		vars.remove( vars.size() - 1 );
+	}
+	
+	@Override public void visit( ParamListNode nod ) {
+		throw new semanticError("visit(ParamListNode) impossible", nod.pos);
+	}
+	
+	@Override public void visit( BlockNode nod ) {
+		
+	}
+	
+	@Override public void visit( ClassDefNode nod ) {
+		
+	}
+	
+	@Override public void visit( ClassVarNode nod ) {
+		
+	}
+	
+	@Override public void visit( ClassFuncNode nod ) {
+		
+	}
+	
+	@Override public void visit( BlockStNode nod ) {
+		
+	}
+	
+	@Override public void visit( VarDefStNode nod ) {
+		
+	}
+	
+	@Override public void visit( IfStNode nod ) {
+		
+	}
+	
+	@Override public void visit( LoopStNode nod ) {
+		
+	}
+	
+	@Override public void visit( CtrlStNode nod ) {
+		
+	}
+	
+	@Override public void visit( ExpStNode nod ) {
+		
+	}
+	
+	@Override public void visit( EmptyStNode nod ) {
+		
+	}
+	
+	@Override public void visit( SufExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( FunCallExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( IdxExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( DotExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( UnaryExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( NewExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( BinExpNode nod ) {
+		
+	}
+	
+	@Override public void visit( SimpleExpNode nod ) {
+		
+	}
+	
+	private boolean ok_var_type( String type ) {
+		if( type.equals("bool") ||
+			type.equals("int") ||
+			type.equals("string") ||
+			classes.containsKey(type) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private boolean ok_func_type( String type, int dim ) {
+		if( ok_var_type(type) ||
+			(type.equals("void") && dim == 0) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private boolean ok_type_match( String t1name, int t1dim,
+								   String t2name, int t2dim ) {
+		return t1name.equals(t2name) && t1dim == t2dim;
+	}
+}
+
+class VarDef {
+	
+	public String type;
+	public String name;
+	public int dim;
+	
+	public VarDef() {
+		type = new String();
+		name = new String();
+		dim = 0;
+	}
+	
+}
+
+class FuncDef {
+	
+	public String type;
+	int dim;
+	public String name;
+	public ArrayList<VarDef> args;
+	
+	public FuncDef() {
+		type = new String();
+		dim = 0;
+		name = new String();
+		args = new ArrayList<>();
+	}
+	
+}
+
+class ClassDef {
+	
+	public String name;
+	public HashMap<String, VarDef> vars;
+	public HashMap<String, FuncDef> funcs;
+	
+	public ClassDef() {
+		name = new String();
+		vars = new HashMap<>();
+		funcs = new HashMap<>();
+	}
+	
+}
