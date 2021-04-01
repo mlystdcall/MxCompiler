@@ -1,2 +1,2 @@
 cd ./src/semantic
-java Semantic
+java -cp "/ulib/java/antlr-4.7.2-complete.jar" Semantic
