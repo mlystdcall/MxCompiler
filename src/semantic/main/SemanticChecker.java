@@ -129,6 +129,9 @@ public class SemanticChecker implements ASTVisitor {
 			funcs.get("main").dim != 0 ) {
 			throw new semanticError("error main type", nod.pos);
 		}
+		if( funcs.get("main").args.size() != 0 ) {
+			throw new semanticError("main cannot have args", nod.pos);
+		}
 	}
 	
 	@Override public void visit( GlobalVarNode nod ) {
